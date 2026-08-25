@@ -137,6 +137,7 @@ func applyMigrations(ctx context.Context, db *pgxpool.Pool) error {
 	}
 	return nil
 }
+
 func migrationApplied(ctx context.Context, db *pgxpool.Pool, version string) (bool, error) {
 	var exists bool
 	err := db.QueryRow(ctx, "SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE version = $1)", version).Scan(&exists)
@@ -180,4 +181,3 @@ func writeError(w http.ResponseWriter, status int, code string, message string) 
 		"error": {"code": code, "message": message},
 	})
 }
-
