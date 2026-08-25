@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/ThanhNV121097/project-3bc0c280/backend/migrations"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -47,6 +48,7 @@ func main() {
 	a := &app{db: db, ready: true}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", a.healthz)
+	mux.HandleFunc("GET /v1/greeting", a.greeting)
 
 	server := &http.Server{
 		Addr:              ":" + port(),
@@ -77,6 +79,22 @@ func (a *app) healthz(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func (a *app) greeting(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	var text string
+	err := a.db.QueryRow(ctx, `SELECT text FROM greetings WHERE id = 1`).Scan(&text)
+	switch {
+	case err == nil:
+		writeJSON(w, http.StatusOK, map[string]string{"text": text})
+	case errors.Is(err, pgx.ErrNoRows):
+		writeError(w, http.StatusNotFound, "GREETING_NOT_FOUND", "Greeting not found")
+	default:
+		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Internal server error")
+	}
 }
 
 func applyMigrations(ctx context.Context, db *pgxpool.Pool) error {
@@ -119,6 +137,7 @@ func applyMigrations(ctx context.Context, db *pgxpool.Pool) error {
 	}
 	return nil
 }
+
 func migrationApplied(ctx context.Context, db *pgxpool.Pool, version string) (bool, error) {
 	var exists bool
 	err := db.QueryRow(ctx, "SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE version = $1)", version).Scan(&exists)
