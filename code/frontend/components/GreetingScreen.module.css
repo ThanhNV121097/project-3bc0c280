@@ -1,0 +1,16 @@
+.greeting-screen {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  text-align: center;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.greeting-screen__heading {
+  margin: 0;
+  font-size: clamp(var(--text-2xl), 8vw, var(--text-3xl));
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+}
